@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ModularBuilder — Panneau de contrôle</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #0e1117; --surface: #161b22; --surface2: #1c2333;
+  --border: #2d333b; --text: #e6edf3; --muted: #7d8590;
+  --accent: #4a8fe8; --accent2: #3fb950; --red: #f85149;
+  --orange: #d29922; --font: 'JetBrains Mono', monospace;
+  --serif: 'Fraunces', serif;
+}
+body.light {
+  --bg: #f5f0e8; --surface: #ffffff; --surface2: #f0ece4;
+  --border: #d4cfc6; --text: #111118; --muted: #6b6b7b;
+  --accent: #2563eb; --accent2: #16a34a; --red: #dc2626;
+  --orange: #ca8a04;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--font); background:var(--bg); color:var(--text); font-size:13px; }
+
+/* ── LAYOUT ── */
+.app { display:grid; grid-template-columns:260px 1fr; grid-template-rows:56px 1fr 32px; height:100vh; }
+.topbar { grid-column:1/-1; display:flex; align-items:center; gap:16px; padding:0 20px; background:var(--surface); border-bottom:1px solid var(--border); }
+.sidebar { grid-row:2; overflow-y:auto; background:var(--surface); border-right:1px solid var(--border); padding:12px 0; }
+.main { grid-row:2; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; }
+.statusbar { grid-column:1/-1; display:flex; align-items:center; gap:12px; padding:0 20px; background:var(--surface); border-top:1px solid var(--border); font-size:11px; color:var(--muted); }
+
+/* ── TOPBAR ── */
+.logo { font-family:var(--serif); font-size:18px; font-weight:700; color:var(--accent); }
+.logo span { font-style:italic; color:var(--accent2); }
+.project-name { font-size:12px; color:var(--muted); padding:4px 10px; border:1px solid var(--border); border-radius:4px; background:var(--surface2); }
+
+/* ── ACTION BUTTONS ── */
+.actions { display:flex; gap:8px; margin-left:auto; }
+.btn { display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-family:var(--font); font-size:12px; font-weight:500; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.btn:hover { border-color:var(--accent); background:rgba(74,143,232,0.1); }
+.btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.btn.primary:hover { background:#5a9ef0; }
+.btn.success { background:var(--accent2); border-color:var(--accent2); color:#fff; }
+.btn.success:hover { background:#4cc960; }
+.btn.danger { border-color:var(--red); color:var(--red); }
+.btn.danger:hover { background:rgba(248,81,73,0.1); }
+.btn.combo { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#fff; font-weight:600; }
+.btn.combo:hover { opacity:0.9; }
+.btn:disabled { opacity:0.4; pointer-events:none; }
+.btn .icon { font-size:15px; }
+
+/* ── SIDEBAR ── */
+.sb-section { padding:8px 16px; font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-top:12px; }
+.sb-section:first-child { margin-top:0; }
+.sb-item { display:flex; align-items:center; gap:8px; padding:8px 16px; cursor:pointer; font-size:12px; color:var(--text); transition:background .1s; }
+.sb-item:hover { background:var(--surface2); }
+.sb-item.active { background:rgba(74,143,232,0.15); color:var(--accent); border-right:2px solid var(--accent); }
+.sb-item .dot { width:8px; height:8px; border-radius:50%; }
+.sb-item .dot.css { background:#e44d9a; }
+.sb-item .dot.html { background:#e8734a; }
+.sb-item .dot.js { background:#f0db4f; }
+.sb-count { font-size:10px; color:var(--muted); padding:2px 6px; border-radius:10px; background:var(--surface2); margin-left:auto; }
+
+/* ── PANELS ── */
+.panel { display:none; flex-direction:column; gap:16px; flex:1; }
+.panel.active { display:flex; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; }
+.card h2 { font-family:var(--serif); font-size:16px; font-weight:700; margin-bottom:12px; color:var(--text); }
+.card h3 { font-size:13px; color:var(--accent); margin-bottom:8px; }
+
+/* ── EDITOR ── */
+.editor-wrap { flex:1; display:flex; flex-direction:column; min-height:400px; }
+.editor-header { display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--surface2); border-radius:8px 8px 0 0; border:1px solid var(--border); border-bottom:none; }
+.editor-filename { font-size:13px; font-weight:600; color:var(--accent); flex:1; }
+.editor-meta { font-size:10px; color:var(--muted); }
+textarea.editor { flex:1; width:100%; min-height:350px; padding:12px 16px; font-family:var(--font); font-size:12px; line-height:1.6; color:var(--text); background:var(--bg); border:1px solid var(--border); border-radius:0 0 8px 8px; resize:vertical; tab-size:2; }
+textarea.editor:focus { outline:none; border-color:var(--accent); }
+
+/* ── LOG ── */
+.log { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-size:11px; line-height:1.8; max-height:200px; overflow-y:auto; white-space:pre-wrap; }
+.log .ok { color:var(--accent2); }
+.log .err { color:var(--red); }
+.log .warn { color:var(--orange); }
+.log .info { color:var(--accent); }
+
+/* ── CONFIG FORM ── */
+.cfg-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.cfg-row label { width:140px; font-size:12px; color:var(--muted); text-align:right; flex-shrink:0; }
+.cfg-row input { flex:1; padding:6px 10px; font-family:var(--font); font-size:12px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); }
+.cfg-row input:focus { outline:none; border-color:var(--accent); }
+
+/* ── SEARCH ── */
+.search-wrap { padding:8px 12px; }
+.search-wrap input { width:100%; padding:6px 10px; font-family:var(--font); font-size:11px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); }
+.search-wrap input:focus { outline:none; border-color:var(--accent); }
+.search-wrap input::placeholder { color:var(--muted); }
+
+/* ── SPINNER ── */
+.spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--muted); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">Modular<span>Builder</span></div>
+    <div class="project-name" id="top-project">MediFolio</div>
+    <div class="actions">
+      <button class="btn" onclick="toggleTheme()" id="theme-btn" title="Thème clair/obscur"><span class="icon">☀️</span></button>
+      <button class="btn" onclick="doBuild()" title="Assembler skeleton + modules"><span class="icon">🔨</span> Build</button>
+      <button class="btn" onclick="doTest()" title="Ouvrir dans le navigateur"><span class="icon">🌐</span> Tester</button>
+      <button class="btn success" onclick="doPublish()" title="Publier sur GitHub"><span class="icon">🚀</span> Publier</button>
+      <button class="btn combo" onclick="doBuildPublishTest()" title="Build + Publier + Tester en un clic"><span class="icon">⚡</span> Tout faire</button>
+    </div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">Navigation</div>
+    <div class="sb-item active" onclick="showPanel('dashboard')">📊 Tableau de bord</div>
+    <div class="sb-item" onclick="showPanel('modules')">📦 Modules <span class="sb-count" id="sb-mod-count">—</span></div>
+    <div class="sb-item" onclick="showPanel('skeleton')">🦴 Skeleton</div>
+    <div class="sb-item" onclick="showPanel('editor')">✏️ Éditeur</div>
+    <div class="sb-item" onclick="showPanel('config')">⚙️ Configuration</div>
+    <div class="sb-item" onclick="showPanel('log')">📋 Journal</div>
+
+    <div class="sb-section">Modules</div>
+    <div class="search-wrap"><input type="text" placeholder="🔍 Filtrer..." id="mod-search" oninput="filterModules(this.value)"/></div>
+    <div id="sb-modules-list"></div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="card">
+        <h2>📊 Tableau de bord</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:8px" id="dash-stats"></div>
+      </div>
+      <div class="card">
+        <h2>⚡ Actions rapides</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">
+          <button class="btn primary" onclick="doBuildTest()"><span class="icon">🔨</span> Build + Tester</button>
+          <button class="btn success" onclick="doBuildPublish()"><span class="icon">🚀</span> Build + Publier</button>
+          <button class="btn combo" onclick="doBuildPublishTest()"><span class="icon">⚡</span> Build + Publier + Tester</button>
+          <button class="btn" onclick="doRefresh()"><span class="icon">🔄</span> Rafraîchir</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>📋 Dernières opérations</h2>
+        <div class="log" id="dash-log">Prêt.</div>
+      </div>
+    </div>
+
+    <!-- MODULES LIST -->
+    <div class="panel" id="panel-modules">
+      <div class="card">
+        <h2>📦 Modules <span id="mod-total" style="font-size:12px;color:var(--muted)"></span></h2>
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <button class="btn" onclick="showPanel('editor');newModule()"><span class="icon">➕</span> Nouveau module</button>
+          <input type="text" placeholder="🔍 Rechercher..." oninput="filterModulesList(this.value)" style="flex:1;padding:6px 10px;font-family:var(--font);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text)"/>
+        </div>
+        <div id="modules-table" style="overflow-x:auto"></div>
+      </div>
+    </div>
+
+    <!-- SKELETON -->
+    <div class="panel" id="panel-skeleton">
+      <div class="card editor-wrap">
+        <div class="editor-header">
+          <span class="editor-filename">🦴 skeleton.html</span>
+          <button class="btn" onclick="saveSkeleton()" style="padding:4px 12px;font-size:11px"><span class="icon">💾</span> Sauver</button>
+        </div>
+        <textarea class="editor" id="skeleton-editor" spellcheck="false"></textarea>
+      </div>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="panel" id="panel-editor">
+      <div class="card editor-wrap">
+        <div class="editor-header">
+          <span class="editor-filename" id="ed-filename">Aucun fichier</span>
+          <span class="editor-meta" id="ed-meta"></span>
+          <button class="btn" onclick="saveModule()" style="padding:4px 12px;font-size:11px"><span class="icon">💾</span> Sauver</button>
+          <button class="btn danger" onclick="deleteCurrentModule()" style="padding:4px 12px;font-size:11px"><span class="icon">🗑️</span> Supprimer</button>
+        </div>
+        <textarea class="editor" id="module-editor" spellcheck="false"></textarea>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="panel" id="panel-config">
+      <div class="card">
+        <h2>⚙️ Configuration du projet</h2>
+        <div style="margin-top:12px">
+          <div class="cfg-row"><label>Nom du projet</label><input id="cfg-project" /></div>
+          <div class="cfg-row"><label>Dossier de travail</label><input id="cfg-workdir" /></div>
+          <div class="cfg-row"><label>Skeleton</label><input id="cfg-skeleton" /></div>
+          <div class="cfg-row"><label>Fichier output</label><input id="cfg-output" /></div>
+          <div class="cfg-row"><label>Dossier modules</label><input id="cfg-modules" /></div>
+          <div class="cfg-row"><label>Repo GitHub</label><input id="cfg-github" /></div>
+          <div class="cfg-row"><label>Navigateur</label><input id="cfg-browser" /></div>
+          <div class="cfg-row"><label>Pattern INCLUDE</label><input id="cfg-pattern" /></div>
+          <div style="text-align:right;margin-top:16px">
+            <button class="btn primary" onclick="saveConfig()"><span class="icon">💾</span> Sauvegarder la config</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="panel" id="panel-log">
+      <div class="card" style="flex:1;display:flex;flex-direction:column">
+        <h2>📋 Journal complet</h2>
+        <div class="log" id="full-log" style="flex:1;max-height:none;margin-top:8px">Prêt.</div>
+        <div style="margin-top:8px;text-align:right">
+          <button class="btn" onclick="document.getElementById('full-log').textContent='';"><span class="icon">🗑️</span> Vider</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- STATUSBAR -->
+  <div class="statusbar">
+    <span id="status-text">Prêt</span>
+    <span style="margin-left:auto">ModularBuilder v1.0 · « Éviter de faire tout ce que l'ordinateur peut faire »</span>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://127.0.0.1:7777/api';
+let _currentModule = '';
+let _modules = [];
+let _config = {};
+
+// ── THEME ──
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light');
+  document.getElementById('theme-btn').querySelector('.icon').textContent = isLight ? '🌙' : '☀️';
+  localStorage.setItem('mb_theme', isLight ? 'light' : 'dark');
+}
+(function() {
+  if (localStorage.getItem('mb_theme') === 'light') {
+    document.body.classList.add('light');
+    document.addEventListener('DOMContentLoaded', function() {
+      var b = document.getElementById('theme-btn');
+      if (b) b.querySelector('.icon').textContent = '🌙';
+    });
+  }
+})();
+
+// ── API HELPERS ──
+async function api(path, method='GET', body=null) {
+  const opts = { method, headers: {'Content-Type':'application/json'} };
+  if (body) opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(API + path, opts);
+    return await r.json();
+  } catch(e) {
+    return { ok: false, error: 'Serveur inaccessible. Lancez: python3 modular_server.py' };
+  }
+}
+
+// ── LOG ──
+function log(msg, cls='info') {
+  const ts = new Date().toLocaleTimeString('fr');
+  const line = `[${ts}] ${msg}`;
+  ['dash-log','full-log'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.innerHTML += `<span class="${cls}">${line}</span>\n`;
+      el.scrollTop = el.scrollHeight;
+    }
+  });
+}
+
+function setStatus(txt) { document.getElementById('status-text').textContent = txt; }
+
+// ── PANELS ──
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const p = document.getElementById('panel-' + name);
+  if (p) p.classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i => {
+    if (i.textContent.includes(name === 'dashboard' ? 'Tableau' : name === 'modules' ? 'Modules' : name === 'skeleton' ? 'Skeleton' : name === 'editor' ? 'Éditeur' : name === 'config' ? 'Configuration' : name === 'log' ? 'Journal' : '???'))
+      i.classList.add('active');
+  });
+  if (name === 'skeleton') loadSkeleton();
+  if (name === 'config') loadConfig();
+}
+
+// ── LOAD DATA ──
+async function loadModules() {
+  const r = await api('/modules');
+  if (!r.ok) { log(r.error, 'err'); return; }
+  _modules = r.modules;
+  document.getElementById('sb-mod-count').textContent = r.count;
+  renderSidebarModules();
+  renderModulesTable();
+  renderDashStats();
+}
+
+function renderSidebarModules(filter='') {
+  const el = document.getElementById('sb-modules-list');
+  const f = filter.toLowerCase();
+  el.innerHTML = _modules
+    .filter(m => !f || m.name.toLowerCase().includes(f))
+    .map(m => `<div class="sb-item" onclick="openModule('${m.name}')"><span class="dot ${m.type}"></span>${m.name}</div>`)
+    .join('');
+}
+
+function filterModules(v) { renderSidebarModules(v); }
+
+function renderModulesTable() {
+  const el = document.getElementById('modules-table');
+  document.getElementById('mod-total').textContent = `(${_modules.length} modules)`;
+  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+  html += '<tr style="border-bottom:1px solid var(--border);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px"><th style="text-align:left;padding:6px">Nom</th><th>Type</th><th>Version</th><th>Taille</th><th>Modifié</th><th></th></tr>';
+  _modules.forEach(m => {
+    html += `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openModule('${m.name}')">
+      <td style="padding:6px"><span class="dot ${m.type}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle"></span>${m.name}</td>
+      <td style="text-align:center;color:var(--muted)">${m.type}</td>
+      <td style="text-align:center;color:var(--accent)">${m.version}</td>
+      <td style="text-align:right;color:var(--muted)">${(m.size/1024).toFixed(1)}k</td>
+      <td style="text-align:right;color:var(--muted)">${m.modified}</td>
+      <td><button class="btn danger" onclick="event.stopPropagation();deleteModule('${m.name}')" style="padding:2px 8px;font-size:10px">🗑️</button></td>
+    </tr>`;
+  });
+  html += '</table>';
+  el.innerHTML = html;
+}
+
+function filterModulesList(v) {
+  const rows = document.querySelectorAll('#modules-table tr');
+  const f = v.toLowerCase();
+  rows.forEach((r, i) => { if (i > 0) r.style.display = r.textContent.toLowerCase().includes(f) ? '' : 'none'; });
+}
+
+function renderDashStats() {
+  const css = _modules.filter(m => m.type === 'css').length;
+  const html = _modules.filter(m => m.type === 'html').length;
+  const js = _modules.filter(m => m.type === 'js').length;
+  const total = _modules.reduce((s, m) => s + m.size, 0);
+  document.getElementById('dash-stats').innerHTML = `
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--accent)">${_modules.length}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">MODULES</div></div>
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#f0db4f">${js}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">JAVASCRIPT</div></div>
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#e8734a">${html}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">HTML</div></div>
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#e44d9a">${css}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">CSS</div></div>
+    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--text)">${(total/1024).toFixed(0)}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Ko TOTAL</div></div>
+  `;
+}
+
+// ── MODULE EDITOR ──
+async function openModule(name) {
+  setStatus('Chargement ' + name + '...');
+  const r = await api('/module?name=' + encodeURIComponent(name));
+  if (!r.ok) { log(r.error, 'err'); return; }
+  _currentModule = name;
+  document.getElementById('ed-filename').textContent = '✏️ ' + name;
+  document.getElementById('ed-meta').textContent = `${r.content.length} caractères · ${r.content.split('\n').length} lignes`;
+  document.getElementById('module-editor').value = r.content;
+  showPanel('editor');
+  setStatus('Module chargé: ' + name);
+  log('Module ouvert: ' + name);
+}
+
+async function saveModule() {
+  if (!_currentModule) return;
+  const content = document.getElementById('module-editor').value;
+  setStatus('Sauvegarde...');
+  const r = await api('/module', 'POST', { name: _currentModule, content });
+  if (r.ok) {
+    log('Module sauvé: ' + _currentModule + ' (' + r.size + ' octets)', 'ok');
+    setStatus('Sauvé !');
+    loadModules();
+  } else {
+    log('Erreur: ' + r.error, 'err');
+  }
+}
+
+function newModule() {
+  const name = prompt('Nom du nouveau module (ex: mon-module-js.js) :');
+  if (!name) return;
+  _currentModule = name;
+  document.getElementById('ed-filename').textContent = '✏️ ' + name + ' (nouveau)';
+  document.getElementById('ed-meta').textContent = 'Nouveau fichier';
+  document.getElementById('module-editor').value = '';
+  log('Nouveau module: ' + name, 'info');
+}
+
+async function deleteModule(name) {
+  if (!confirm('Supprimer ' + name + ' ?')) return;
+  const r = await api('/module/delete', 'POST', { name });
+  if (r.ok) { log('Module supprimé: ' + name, 'warn'); loadModules(); }
+  else log('Erreur: ' + r.error, 'err');
+}
+
+function deleteCurrentModule() {
+  if (_currentModule) deleteModule(_currentModule);
+}
+
+// ── SKELETON ──
+async function loadSkeleton() {
+  const r = await api('/skeleton');
+  if (r.ok) document.getElementById('skeleton-editor').value = r.content;
+  else log(r.error, 'err');
+}
+
+async function saveSkeleton() {
+  const content = document.getElementById('skeleton-editor').value;
+  const r = await api('/skeleton', 'POST', { content });
+  if (r.ok) { log('Skeleton sauvé', 'ok'); setStatus('Skeleton sauvé'); }
+  else log(r.error, 'err');
+}
+
+// ── CONFIG ──
+async function loadConfig() {
+  const r = await api('/config');
+  _config = r;
+  document.getElementById('cfg-project').value = r.project_name || '';
+  document.getElementById('cfg-workdir').value = r.work_dir || '';
+  document.getElementById('cfg-skeleton').value = r.skeleton || '';
+  document.getElementById('cfg-output').value = r.output || '';
+  document.getElementById('cfg-modules').value = r.modules_dir || '';
+  document.getElementById('cfg-github').value = r.github_dir || '';
+  document.getElementById('cfg-browser').value = r.browser || '';
+  document.getElementById('cfg-pattern').value = r.include_pattern || '';
+  document.getElementById('top-project').textContent = r.project_name || '—';
+}
+
+async function saveConfig() {
+  const cfg = {
+    project_name: document.getElementById('cfg-project').value,
+    work_dir: document.getElementById('cfg-workdir').value,
+    skeleton: document.getElementById('cfg-skeleton').value,
+    output: document.getElementById('cfg-output').value,
+    modules_dir: document.getElementById('cfg-modules').value,
+    github_dir: document.getElementById('cfg-github').value,
+    browser: document.getElementById('cfg-browser').value,
+    include_pattern: document.getElementById('cfg-pattern').value,
+  };
+  const r = await api('/config', 'POST', cfg);
+  log('Configuration sauvée', 'ok');
+  setStatus('Config sauvée');
+  document.getElementById('top-project').textContent = cfg.project_name;
+  loadModules();
+}
+
+// ── ACTIONS ──
+async function doBuild() {
+  setStatus('Build en cours...');
+  log('🔨 Build lancé...', 'info');
+  const r = await api('/build');
+  if (r.ok) {
+    log(`✅ Build OK: ${r.lines} lignes, ${r.modules} modules`, 'ok');
+    if (r.warnings && r.warnings.length) r.warnings.forEach(w => log('⚠️ ' + w, 'warn'));
+    setStatus('Build terminé');
+  } else {
+    log('❌ ' + r.error, 'err');
+    setStatus('Erreur build');
+  }
+  return r;
+}
+
+async function doTest() {
+  setStatus('Ouverture navigateur...');
+  const r = await api('/test');
+  if (r.ok) log('🌐 Ouvert dans le navigateur', 'ok');
+  else log('❌ ' + r.error, 'err');
+}
+
+async function doPublish() {
+  setStatus('Publication...');
+  log('🚀 Publication GitHub...', 'info');
+  const r = await api('/publish');
+  if (r.ok) {
+    log('✅ ' + (r.message || 'Publié'), 'ok');
+    setStatus('Publié');
+  } else {
+    log('❌ ' + r.error, 'err');
+    setStatus('Erreur publication');
+  }
+}
+
+async function doBuildTest() {
+  setStatus('Build + Test...');
+  log('⚡ Build + Test...', 'info');
+  const r = await api('/build-test', 'POST');
+  if (r.ok) {
+    log(`✅ Build OK: ${r.build.lines} lignes, ${r.build.modules} modules`, 'ok');
+    log('🌐 Ouvert dans le navigateur', 'ok');
+    setStatus('Build + Test terminé');
+  } else log('❌ ' + (r.error || r.build?.error), 'err');
+}
+
+async function doBuildPublish() {
+  setStatus('Build + Publish...');
+  log('⚡ Build + Publish...', 'info');
+  const r = await api('/build-publish', 'POST');
+  if (r.ok) {
+    log(`✅ Build OK: ${r.build.lines} lignes, ${r.build.modules} modules`, 'ok');
+    log('✅ ' + (r.publish?.message || 'Publié'), 'ok');
+    setStatus('Build + Publish terminé');
+  } else log('❌ ' + (r.error || r.build?.error), 'err');
+}
+
+async function doBuildPublishTest() {
+  setStatus('Build + Publish + Test...');
+  log('⚡ Build + Publish + Test...', 'info');
+  const r = await api('/build-publish-test', 'POST');
+  if (r.ok) {
+    log(`✅ Build OK: ${r.build.lines} lignes, ${r.build.modules} modules`, 'ok');
+    log('✅ ' + (r.publish?.message || 'Publié'), 'ok');
+    log('🌐 Ouvert dans le navigateur', 'ok');
+    setStatus('Tout fait !');
+  } else log('❌ ' + (r.error || r.build?.error), 'err');
+}
+
+async function doRefresh() {
+  log('🔄 Rafraîchissement...', 'info');
+  await loadModules();
+  log('✅ Données à jour', 'ok');
+}
+
+// ── INIT ──
+async function init() {
+  const r = await api('/config');
+  if (r.error) {
+    log('❌ ' + r.error, 'err');
+    log('Lancez le serveur: python3 modular_server.py', 'warn');
+    return;
+  }
+  _config = r;
+  document.getElementById('top-project').textContent = r.project_name || '—';
+  await loadModules();
+  log('🚀 ModularBuilder prêt — ' + (_config.project_name || ''), 'ok');
+}
+
+init();
+</script>
+</body>
+</html>
