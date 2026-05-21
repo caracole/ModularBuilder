@@ -27,6 +27,7 @@ DEFAULT_CONFIG = {
     'output': 'MediFolio.html',
     'modules_dir': 'modules',
     'github_dir': os.path.expanduser('~/Escritorio/MediFolio_github'),
+    'online_url': 'https://caracole.github.io/MediFolio/',
     'browser': 'brave-browser',
     'include_pattern': r'<INCLUDE:(.+?)\s*/>',
 }

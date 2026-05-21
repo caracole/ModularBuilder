@@ -3,8 +3,24 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>ModularBuilder — Panneau de contrôle</title>
+<title>ModularBuilder v1.1 — Panneau de contrôle</title>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Fraunces:opsz,wght@9..144,400;9..144,700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/material-darker.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/eclipse.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/dialog/dialog.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/search/matchesonscrollbar.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/dialog/dialog.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/search/search.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/search/searchcursor.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/search/jump-to-line.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/search/matchesonscrollbar.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/scroll/annotatescrollbar.min.js"></script>
 <style>
 :root {
   --bg: #0e1117; --surface: #161b22; --surface2: #1c2333;
@@ -22,21 +38,19 @@ body.light {
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:var(--font); background:var(--bg); color:var(--text); font-size:13px; }
 
-/* ── LAYOUT ── */
 .app { display:grid; grid-template-columns:260px 1fr; grid-template-rows:56px 1fr 32px; height:100vh; }
-.topbar { grid-column:1/-1; display:flex; align-items:center; gap:16px; padding:0 20px; background:var(--surface); border-bottom:1px solid var(--border); }
+.topbar { grid-column:1/-1; display:flex; align-items:center; gap:12px; padding:0 16px; background:var(--surface); border-bottom:1px solid var(--border); overflow-x:auto; }
 .sidebar { grid-row:2; overflow-y:auto; background:var(--surface); border-right:1px solid var(--border); padding:12px 0; }
 .main { grid-row:2; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:16px; }
 .statusbar { grid-column:1/-1; display:flex; align-items:center; gap:12px; padding:0 20px; background:var(--surface); border-top:1px solid var(--border); font-size:11px; color:var(--muted); }
 
-/* ── TOPBAR ── */
-.logo { font-family:var(--serif); font-size:18px; font-weight:700; color:var(--accent); }
+.logo { font-family:var(--serif); font-size:18px; font-weight:700; color:var(--accent); white-space:nowrap; }
 .logo span { font-style:italic; color:var(--accent2); }
+.logo sup { font-size:9px; color:var(--muted); font-style:normal; }
 .project-name { font-size:12px; color:var(--muted); padding:4px 10px; border:1px solid var(--border); border-radius:4px; background:var(--surface2); }
 
-/* ── ACTION BUTTONS ── */
-.actions { display:flex; gap:8px; margin-left:auto; }
-.btn { display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-family:var(--font); font-size:12px; font-weight:500; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.actions { display:flex; gap:6px; margin-left:auto; flex-wrap:nowrap; }
+.btn { display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-family:var(--font); font-size:11px; font-weight:500; cursor:pointer; transition:all .15s; white-space:nowrap; }
 .btn:hover { border-color:var(--accent); background:rgba(74,143,232,0.1); }
 .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
 .btn.primary:hover { background:#5a9ef0; }
@@ -46,77 +60,86 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); font-si
 .btn.danger:hover { background:rgba(248,81,73,0.1); }
 .btn.combo { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#fff; font-weight:600; }
 .btn.combo:hover { opacity:0.9; }
+.btn.web { background:#8b5cf6; border-color:#8b5cf6; color:#fff; }
+.btn.web:hover { background:#9d6ffc; }
 .btn:disabled { opacity:0.4; pointer-events:none; }
-.btn .icon { font-size:15px; }
+.btn .i { font-size:14px; }
 
-/* ── SIDEBAR ── */
 .sb-section { padding:8px 16px; font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; margin-top:12px; }
 .sb-section:first-child { margin-top:0; }
-.sb-item { display:flex; align-items:center; gap:8px; padding:8px 16px; cursor:pointer; font-size:12px; color:var(--text); transition:background .1s; }
+.sb-item { display:flex; align-items:center; gap:8px; padding:7px 16px; cursor:pointer; font-size:11px; color:var(--text); transition:background .1s; }
 .sb-item:hover { background:var(--surface2); }
 .sb-item.active { background:rgba(74,143,232,0.15); color:var(--accent); border-right:2px solid var(--accent); }
-.sb-item .dot { width:8px; height:8px; border-radius:50%; }
-.sb-item .dot.css { background:#e44d9a; }
-.sb-item .dot.html { background:#e8734a; }
-.sb-item .dot.js { background:#f0db4f; }
+.sb-item .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.dot.css { background:#e44d9a; } .dot.html { background:#e8734a; } .dot.js { background:#f0db4f; } .dot.json { background:#8b5cf6; }
 .sb-count { font-size:10px; color:var(--muted); padding:2px 6px; border-radius:10px; background:var(--surface2); margin-left:auto; }
 
-/* ── PANELS ── */
+.search-wrap { padding:6px 12px; }
+.search-wrap input { width:100%; padding:5px 8px; font-family:var(--font); font-size:11px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); }
+.search-wrap input:focus { outline:none; border-color:var(--accent); }
+
 .panel { display:none; flex-direction:column; gap:16px; flex:1; }
 .panel.active { display:flex; }
 .card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; }
-.card h2 { font-family:var(--serif); font-size:16px; font-weight:700; margin-bottom:12px; color:var(--text); }
-.card h3 { font-size:13px; color:var(--accent); margin-bottom:8px; }
+.card h2 { font-family:var(--serif); font-size:16px; font-weight:700; margin-bottom:12px; }
 
-/* ── EDITOR ── */
 .editor-wrap { flex:1; display:flex; flex-direction:column; min-height:400px; }
-.editor-header { display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--surface2); border-radius:8px 8px 0 0; border:1px solid var(--border); border-bottom:none; }
-.editor-filename { font-size:13px; font-weight:600; color:var(--accent); flex:1; }
-.editor-meta { font-size:10px; color:var(--muted); }
-textarea.editor { flex:1; width:100%; min-height:350px; padding:12px 16px; font-family:var(--font); font-size:12px; line-height:1.6; color:var(--text); background:var(--bg); border:1px solid var(--border); border-radius:0 0 8px 8px; resize:vertical; tab-size:2; }
-textarea.editor:focus { outline:none; border-color:var(--accent); }
+.editor-header { display:flex; align-items:center; gap:10px; padding:8px 14px; background:var(--surface2); border-radius:8px 8px 0 0; border:1px solid var(--border); border-bottom:none; flex-wrap:wrap; }
+.editor-filename { font-size:13px; font-weight:600; color:var(--accent); }
+.editor-version { font-size:10px; color:var(--accent2); }
+.editor-meta { font-size:10px; color:var(--muted); margin-left:auto; }
+.cm-wrap { flex:1; border:1px solid var(--border); border-radius:0 0 8px 8px; overflow:hidden; }
+.cm-wrap .CodeMirror { height:100%; font-family:var(--font); font-size:12px; }
 
-/* ── LOG ── */
 .log { background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-size:11px; line-height:1.8; max-height:200px; overflow-y:auto; white-space:pre-wrap; }
-.log .ok { color:var(--accent2); }
-.log .err { color:var(--red); }
-.log .warn { color:var(--orange); }
-.log .info { color:var(--accent); }
+.log .ok { color:var(--accent2); } .log .err { color:var(--red); } .log .warn { color:var(--orange); } .log .info { color:var(--accent); }
 
-/* ── CONFIG FORM ── */
 .cfg-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
 .cfg-row label { width:140px; font-size:12px; color:var(--muted); text-align:right; flex-shrink:0; }
 .cfg-row input { flex:1; padding:6px 10px; font-family:var(--font); font-size:12px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); }
 .cfg-row input:focus { outline:none; border-color:var(--accent); }
 
-/* ── SEARCH ── */
-.search-wrap { padding:8px 12px; }
-.search-wrap input { width:100%; padding:6px 10px; font-family:var(--font); font-size:11px; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); }
-.search-wrap input:focus { outline:none; border-color:var(--accent); }
-.search-wrap input::placeholder { color:var(--muted); }
+.type-group { margin-bottom:16px; }
+.type-group-title { display:flex; align-items:center; gap:8px; padding:8px 0; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); margin-bottom:4px; cursor:pointer; }
+.type-group-title .dot { width:10px; height:10px; border-radius:50%; }
+.mod-row { display:flex; align-items:center; gap:10px; padding:6px 8px; border-bottom:1px solid rgba(128,128,128,0.1); cursor:pointer; font-size:12px; transition:background .1s; }
+.mod-row:hover { background:var(--surface2); border-radius:4px; }
+.mod-row .name { flex:1; }
+.mod-row .ver { color:var(--accent2); font-size:10px; }
+.mod-row .size { color:var(--muted); font-size:10px; width:50px; text-align:right; }
+.mod-row .date { color:var(--muted); font-size:10px; width:100px; text-align:right; }
 
-/* ── SPINNER ── */
-.spinner { display:inline-block; width:14px; height:14px; border:2px solid var(--muted); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; }
-@keyframes spin { to { transform:rotate(360deg); } }
+/* Skeleton INCLUDE list */
+.incl-row { display:flex; align-items:center; gap:8px; padding:6px 8px; border-bottom:1px solid rgba(128,128,128,0.1); font-size:12px; }
+.incl-row:hover { background:var(--surface2); border-radius:4px; }
+.incl-row .num { color:var(--muted); font-size:10px; width:24px; text-align:right; }
+.incl-row .path { flex:1; cursor:pointer; color:var(--accent); }
+.incl-row .path:hover { text-decoration:underline; }
+
+/* Confirm dialog */
+.confirm-overlay { position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7); display:flex; align-items:center; justify-content:center; }
+.confirm-box { background:var(--surface); border:2px solid var(--red); border-radius:12px; padding:24px; max-width:400px; width:90%; text-align:center; }
+.confirm-box h3 { font-size:16px; color:var(--red); margin-bottom:12px; }
+.confirm-box .fname { font-size:14px; color:var(--text); font-weight:700; padding:8px; background:var(--surface2); border-radius:6px; margin-bottom:16px; }
+.confirm-box .btns { display:flex; gap:10px; justify-content:center; }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo">Modular<span>Builder</span></div>
-    <div class="project-name" id="top-project">MediFolio</div>
+    <div class="logo">Modular<span>Builder</span><sup>v1.1</sup></div>
+    <div class="project-name" id="top-project">—</div>
     <div class="actions">
-      <button class="btn" onclick="toggleTheme()" id="theme-btn" title="Thème clair/obscur"><span class="icon">☀️</span></button>
-      <button class="btn" onclick="doBuild()" title="Assembler skeleton + modules"><span class="icon">🔨</span> Build</button>
-      <button class="btn" onclick="doTest()" title="Ouvrir dans le navigateur"><span class="icon">🌐</span> Tester</button>
-      <button class="btn success" onclick="doPublish()" title="Publier sur GitHub"><span class="icon">🚀</span> Publier</button>
-      <button class="btn combo" onclick="doBuildPublishTest()" title="Build + Publier + Tester en un clic"><span class="icon">⚡</span> Tout faire</button>
+      <button class="btn" onclick="toggleTheme()" id="theme-btn" title="Thème clair/obscur"><span class="i">☀️</span></button>
+      <button class="btn" onclick="doBuild()" title="Build"><span class="i">🔨</span> Build</button>
+      <button class="btn" onclick="doBuildTest()" title="Build + Tester local"><span class="i">🖥️</span> Tester</button>
+      <button class="btn success" onclick="doBuildPublish()" title="Build + Publier GitHub"><span class="i">🚀</span> Publier</button>
+      <button class="btn web" onclick="doOpenOnline()" title="Voir en ligne"><span class="i">🌍</span> En ligne</button>
+      <button class="btn combo" onclick="doBuildPublishTest()" title="Build + Publier + Tester"><span class="i">⚡</span> Tout !</button>
     </div>
   </div>
 
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sb-section">Navigation</div>
     <div class="sb-item active" onclick="showPanel('dashboard')">📊 Tableau de bord</div>
@@ -125,32 +148,31 @@ textarea.editor:focus { outline:none; border-color:var(--accent); }
     <div class="sb-item" onclick="showPanel('editor')">✏️ Éditeur</div>
     <div class="sb-item" onclick="showPanel('config')">⚙️ Configuration</div>
     <div class="sb-item" onclick="showPanel('log')">📋 Journal</div>
-
     <div class="sb-section">Modules</div>
-    <div class="search-wrap"><input type="text" placeholder="🔍 Filtrer..." id="mod-search" oninput="filterModules(this.value)"/></div>
+    <div class="search-wrap"><input type="text" placeholder="🔍 Filtrer..." id="mod-search" oninput="filterSidebar(this.value)"/></div>
     <div id="sb-modules-list"></div>
   </div>
 
-  <!-- MAIN -->
   <div class="main">
 
     <!-- DASHBOARD -->
     <div class="panel active" id="panel-dashboard">
       <div class="card">
         <h2>📊 Tableau de bord</h2>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:8px" id="dash-stats"></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:8px" id="dash-stats"></div>
       </div>
       <div class="card">
         <h2>⚡ Actions rapides</h2>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">
-          <button class="btn primary" onclick="doBuildTest()"><span class="icon">🔨</span> Build + Tester</button>
-          <button class="btn success" onclick="doBuildPublish()"><span class="icon">🚀</span> Build + Publier</button>
-          <button class="btn combo" onclick="doBuildPublishTest()"><span class="icon">⚡</span> Build + Publier + Tester</button>
-          <button class="btn" onclick="doRefresh()"><span class="icon">🔄</span> Rafraîchir</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+          <button class="btn primary" onclick="doBuildTest()"><span class="i">🖥️</span> Build + Tester</button>
+          <button class="btn success" onclick="doBuildPublish()"><span class="i">🚀</span> Build + Publier</button>
+          <button class="btn combo" onclick="doBuildPublishTest()"><span class="i">⚡</span> Tout faire</button>
+          <button class="btn web" onclick="doOpenOnline()"><span class="i">🌍</span> Voir en ligne</button>
+          <button class="btn" onclick="doRefresh()"><span class="i">🔄</span> Rafraîchir</button>
         </div>
       </div>
       <div class="card">
-        <h2>📋 Dernières opérations</h2>
+        <h2>📋 Journal</h2>
         <div class="log" id="dash-log">Prêt.</div>
       </div>
     </div>
@@ -160,21 +182,30 @@ textarea.editor:focus { outline:none; border-color:var(--accent); }
       <div class="card">
         <h2>📦 Modules <span id="mod-total" style="font-size:12px;color:var(--muted)"></span></h2>
         <div style="display:flex;gap:8px;margin-bottom:12px">
-          <button class="btn" onclick="showPanel('editor');newModule()"><span class="icon">➕</span> Nouveau module</button>
-          <input type="text" placeholder="🔍 Rechercher..." oninput="filterModulesList(this.value)" style="flex:1;padding:6px 10px;font-family:var(--font);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text)"/>
+          <button class="btn" onclick="newModule()"><span class="i">➕</span> Nouveau</button>
+          <input type="text" placeholder="🔍 Rechercher..." id="mod-list-search" oninput="renderModulesGrouped(this.value)" style="flex:1;padding:5px 8px;font-family:var(--font);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text)"/>
         </div>
-        <div id="modules-table" style="overflow-x:auto"></div>
+        <div id="modules-grouped"></div>
       </div>
     </div>
 
     <!-- SKELETON -->
     <div class="panel" id="panel-skeleton">
+      <div class="card">
+        <h2>🦴 Skeleton — Includes</h2>
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn" onclick="skeletonAddInclude()"><span class="i">➕</span> Ajouter INCLUDE</button>
+          <button class="btn danger" onclick="skeletonRemoveInclude()"><span class="i">🗑️</span> Supprimer INCLUDE</button>
+          <input type="text" placeholder="🔍 Chercher dans le skeleton..." id="skel-search" oninput="filterSkeletonIncludes(this.value)" style="flex:1;padding:5px 8px;font-family:var(--font);font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text)"/>
+        </div>
+        <div id="skeleton-includes"></div>
+      </div>
       <div class="card editor-wrap">
         <div class="editor-header">
           <span class="editor-filename">🦴 skeleton.html</span>
-          <button class="btn" onclick="saveSkeleton()" style="padding:4px 12px;font-size:11px"><span class="icon">💾</span> Sauver</button>
+          <button class="btn" onclick="saveSkeleton()" style="padding:4px 10px;font-size:11px"><span class="i">💾</span> Sauver</button>
         </div>
-        <textarea class="editor" id="skeleton-editor" spellcheck="false"></textarea>
+        <div class="cm-wrap" id="skeleton-cm-wrap"></div>
       </div>
     </div>
 
@@ -183,11 +214,12 @@ textarea.editor:focus { outline:none; border-color:var(--accent); }
       <div class="card editor-wrap">
         <div class="editor-header">
           <span class="editor-filename" id="ed-filename">Aucun fichier</span>
+          <span class="editor-version" id="ed-version"></span>
           <span class="editor-meta" id="ed-meta"></span>
-          <button class="btn" onclick="saveModule()" style="padding:4px 12px;font-size:11px"><span class="icon">💾</span> Sauver</button>
-          <button class="btn danger" onclick="deleteCurrentModule()" style="padding:4px 12px;font-size:11px"><span class="icon">🗑️</span> Supprimer</button>
+          <button class="btn" onclick="saveModule()" style="padding:4px 10px;font-size:11px"><span class="i">💾</span> Sauver</button>
+          <button class="btn danger" onclick="deleteCurrentModule()" style="padding:4px 10px;font-size:11px"><span class="i">🗑️</span> Supprimer</button>
         </div>
-        <textarea class="editor" id="module-editor" spellcheck="false"></textarea>
+        <div class="cm-wrap" id="module-cm-wrap"></div>
       </div>
     </div>
 
@@ -202,10 +234,11 @@ textarea.editor:focus { outline:none; border-color:var(--accent); }
           <div class="cfg-row"><label>Fichier output</label><input id="cfg-output" /></div>
           <div class="cfg-row"><label>Dossier modules</label><input id="cfg-modules" /></div>
           <div class="cfg-row"><label>Repo GitHub</label><input id="cfg-github" /></div>
+          <div class="cfg-row"><label>URL en ligne</label><input id="cfg-url" placeholder="https://caracole.github.io/MediFolio/" /></div>
           <div class="cfg-row"><label>Navigateur</label><input id="cfg-browser" /></div>
           <div class="cfg-row"><label>Pattern INCLUDE</label><input id="cfg-pattern" /></div>
           <div style="text-align:right;margin-top:16px">
-            <button class="btn primary" onclick="saveConfig()"><span class="icon">💾</span> Sauvegarder la config</button>
+            <button class="btn primary" onclick="saveConfig()"><span class="i">💾</span> Sauvegarder</button>
           </div>
         </div>
       </div>
@@ -217,53 +250,49 @@ textarea.editor:focus { outline:none; border-color:var(--accent); }
         <h2>📋 Journal complet</h2>
         <div class="log" id="full-log" style="flex:1;max-height:none;margin-top:8px">Prêt.</div>
         <div style="margin-top:8px;text-align:right">
-          <button class="btn" onclick="document.getElementById('full-log').textContent='';"><span class="icon">🗑️</span> Vider</button>
+          <button class="btn danger" onclick="clearLog()"><span class="i">🗑️</span> Vider</button>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- STATUSBAR -->
   <div class="statusbar">
     <span id="status-text">Prêt</span>
-    <span style="margin-left:auto">ModularBuilder v1.0 · « Éviter de faire tout ce que l'ordinateur peut faire »</span>
+    <span style="margin-left:auto">ModularBuilder v1.1 · « Éviter de faire tout ce que l'ordinateur peut faire »</span>
   </div>
 
 </div>
 
+<!-- CONFIRM DIALOG -->
+<div id="confirm-dialog" style="display:none"></div>
+
 <script>
 const API = 'http://127.0.0.1:7777/api';
-let _currentModule = '';
-let _modules = [];
-let _config = {};
+let _currentModule = '', _modules = [], _config = {};
+let _cmEditor = null, _cmSkeleton = null;
+const VALID_EXT = ['js','css','html','json','htm'];
 
 // ── THEME ──
 function toggleTheme() {
   const isLight = document.body.classList.toggle('light');
-  document.getElementById('theme-btn').querySelector('.icon').textContent = isLight ? '🌙' : '☀️';
+  document.getElementById('theme-btn').querySelector('.i').textContent = isLight ? '🌙' : '☀️';
   localStorage.setItem('mb_theme', isLight ? 'light' : 'dark');
+  updateCMTheme();
 }
-(function() {
-  if (localStorage.getItem('mb_theme') === 'light') {
-    document.body.classList.add('light');
-    document.addEventListener('DOMContentLoaded', function() {
-      var b = document.getElementById('theme-btn');
-      if (b) b.querySelector('.icon').textContent = '🌙';
-    });
-  }
-})();
+function updateCMTheme() {
+  const t = document.body.classList.contains('light') ? 'eclipse' : 'material-darker';
+  if (_cmEditor) _cmEditor.setOption('theme', t);
+  if (_cmSkeleton) _cmSkeleton.setOption('theme', t);
+}
+(function(){ if(localStorage.getItem('mb_theme')==='light') document.body.classList.add('light'); })();
 
-// ── API HELPERS ──
+// ── API ──
 async function api(path, method='GET', body=null) {
-  const opts = { method, headers: {'Content-Type':'application/json'} };
+  const opts = { method, headers:{'Content-Type':'application/json'} };
   if (body) opts.body = JSON.stringify(body);
-  try {
-    const r = await fetch(API + path, opts);
-    return await r.json();
-  } catch(e) {
-    return { ok: false, error: 'Serveur inaccessible. Lancez: python3 modular_server.py' };
-  }
+  try { const r = await fetch(API+path, opts); return await r.json(); }
+  catch(e) { return {ok:false, error:'Serveur inaccessible. Lancez: python3 modular_server.py'}; }
 }
 
 // ── LOG ──
@@ -272,166 +301,248 @@ function log(msg, cls='info') {
   const line = `[${ts}] ${msg}`;
   ['dash-log','full-log'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) {
-      el.innerHTML += `<span class="${cls}">${line}</span>\n`;
-      el.scrollTop = el.scrollHeight;
-    }
+    if (el) { el.innerHTML += `<span class="${cls}">${line}</span>\n`; el.scrollTop = el.scrollHeight; }
+  });
+}
+function setStatus(t) { document.getElementById('status-text').textContent = t; }
+function clearLog() {
+  showConfirm('Vider le journal ?', 'Toutes les entrées seront effacées.', function() {
+    document.getElementById('dash-log').innerHTML = '';
+    document.getElementById('full-log').innerHTML = '';
+    log('Journal vidé', 'info');
   });
 }
 
-function setStatus(txt) { document.getElementById('status-text').textContent = txt; }
+// ── CONFIRM DIALOG ──
+function showConfirm(title, detail, onOk) {
+  const el = document.getElementById('confirm-dialog');
+  el.style.display = 'block';
+  el.innerHTML = `<div class="confirm-overlay" onclick="if(event.target===this)hideConfirm()">
+    <div class="confirm-box">
+      <h3>${title}</h3>
+      <div class="fname">${detail}</div>
+      <div class="btns">
+        <button class="btn danger" id="confirm-ok" style="padding:8px 20px">Confirmer</button>
+        <button class="btn" onclick="hideConfirm()" style="padding:8px 20px">Annuler</button>
+      </div>
+    </div></div>`;
+  document.getElementById('confirm-ok').onclick = function() { hideConfirm(); onOk(); };
+}
+function hideConfirm() { document.getElementById('confirm-dialog').style.display = 'none'; }
 
 // ── PANELS ──
 function showPanel(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  const p = document.getElementById('panel-' + name);
+  const p = document.getElementById('panel-'+name);
   if (p) p.classList.add('active');
-  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
-  document.querySelectorAll('.sb-item').forEach(i => {
-    if (i.textContent.includes(name === 'dashboard' ? 'Tableau' : name === 'modules' ? 'Modules' : name === 'skeleton' ? 'Skeleton' : name === 'editor' ? 'Éditeur' : name === 'config' ? 'Configuration' : name === 'log' ? 'Journal' : '???'))
-      i.classList.add('active');
-  });
+  document.querySelectorAll('.sidebar .sb-item').forEach(i => i.classList.remove('active'));
+  const map = {dashboard:'Tableau',modules:'Modules',skeleton:'Skeleton',editor:'Éditeur',config:'Configuration',log:'Journal'};
+  document.querySelectorAll('.sidebar .sb-item').forEach(i => { if(i.textContent.includes(map[name]||'')) i.classList.add('active'); });
   if (name === 'skeleton') loadSkeleton();
   if (name === 'config') loadConfig();
+  if (name === 'editor' && _cmEditor) setTimeout(() => _cmEditor.refresh(), 50);
+  if (name === 'skeleton' && _cmSkeleton) setTimeout(() => _cmSkeleton.refresh(), 50);
 }
 
-// ── LOAD DATA ──
+// ── CODEMIRROR ──
+function getCMMode(name) {
+  if (!name) return 'htmlmixed';
+  if (name.endsWith('.js') || name.endsWith('.json')) return 'javascript';
+  if (name.endsWith('.css')) return 'css';
+  return 'htmlmixed';
+}
+function getCMTheme() { return document.body.classList.contains('light') ? 'eclipse' : 'material-darker'; }
+
+function initEditors() {
+  _cmEditor = CodeMirror(document.getElementById('module-cm-wrap'), {
+    value: '', mode: 'htmlmixed', theme: getCMTheme(), lineNumbers: true,
+    lineWrapping: true, tabSize: 2, indentWithTabs: false,
+    extraKeys: { 'Ctrl-S': saveModule, 'Cmd-S': saveModule }
+  });
+  _cmSkeleton = CodeMirror(document.getElementById('skeleton-cm-wrap'), {
+    value: '', mode: 'htmlmixed', theme: getCMTheme(), lineNumbers: true,
+    lineWrapping: true, tabSize: 2, indentWithTabs: false,
+    extraKeys: { 'Ctrl-S': saveSkeleton, 'Cmd-S': saveSkeleton }
+  });
+}
+
+// ── MODULES ──
 async function loadModules() {
   const r = await api('/modules');
-  if (!r.ok) { log(r.error, 'err'); return; }
-  _modules = r.modules;
-  document.getElementById('sb-mod-count').textContent = r.count;
-  renderSidebarModules();
-  renderModulesTable();
-  renderDashStats();
+  if (!r.ok) { log(r.error,'err'); return; }
+  _modules = r.modules.filter(m => { const ext = m.name.split('.').pop(); return VALID_EXT.includes(ext); });
+  document.getElementById('sb-mod-count').textContent = _modules.length;
+  renderSidebar(); renderModulesGrouped(); renderDashStats();
 }
 
-function renderSidebarModules(filter='') {
+function renderSidebar(filter='') {
   const el = document.getElementById('sb-modules-list');
   const f = filter.toLowerCase();
-  el.innerHTML = _modules
-    .filter(m => !f || m.name.toLowerCase().includes(f))
-    .map(m => `<div class="sb-item" onclick="openModule('${m.name}')"><span class="dot ${m.type}"></span>${m.name}</div>`)
-    .join('');
+  el.innerHTML = _modules.filter(m => !f || m.name.toLowerCase().includes(f))
+    .map(m => `<div class="sb-item" onclick="openModule('${m.name}')"><span class="dot ${m.type}"></span>${m.name.length>28?m.name.slice(0,26)+'…':m.name}</div>`).join('');
 }
+function filterSidebar(v) { renderSidebar(v); }
 
-function filterModules(v) { renderSidebarModules(v); }
-
-function renderModulesTable() {
-  const el = document.getElementById('modules-table');
-  document.getElementById('mod-total').textContent = `(${_modules.length} modules)`;
-  let html = '<table style="width:100%;border-collapse:collapse;font-size:12px">';
-  html += '<tr style="border-bottom:1px solid var(--border);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:1px"><th style="text-align:left;padding:6px">Nom</th><th>Type</th><th>Version</th><th>Taille</th><th>Modifié</th><th></th></tr>';
-  _modules.forEach(m => {
-    html += `<tr style="border-bottom:1px solid var(--border);cursor:pointer" onclick="openModule('${m.name}')">
-      <td style="padding:6px"><span class="dot ${m.type}" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle"></span>${m.name}</td>
-      <td style="text-align:center;color:var(--muted)">${m.type}</td>
-      <td style="text-align:center;color:var(--accent)">${m.version}</td>
-      <td style="text-align:right;color:var(--muted)">${(m.size/1024).toFixed(1)}k</td>
-      <td style="text-align:right;color:var(--muted)">${m.modified}</td>
-      <td><button class="btn danger" onclick="event.stopPropagation();deleteModule('${m.name}')" style="padding:2px 8px;font-size:10px">🗑️</button></td>
-    </tr>`;
+function renderModulesGrouped(filter) {
+  const f = (filter||'').toLowerCase();
+  const groups = {};
+  _modules.filter(m => !f || m.name.toLowerCase().includes(f)).forEach(m => {
+    const t = m.type.toUpperCase(); if(!groups[t]) groups[t]=[];  groups[t].push(m);
   });
-  html += '</table>';
-  el.innerHTML = html;
-}
-
-function filterModulesList(v) {
-  const rows = document.querySelectorAll('#modules-table tr');
-  const f = v.toLowerCase();
-  rows.forEach((r, i) => { if (i > 0) r.style.display = r.textContent.toLowerCase().includes(f) ? '' : 'none'; });
+  const order = ['JS','HTML','CSS','JSON'];
+  let html = '';
+  order.forEach(t => {
+    if (!groups[t]) return;
+    html += `<div class="type-group"><div class="type-group-title"><span class="dot ${t.toLowerCase()}"></span>${t} (${groups[t].length})</div>`;
+    groups[t].forEach(m => {
+      html += `<div class="mod-row" onclick="openModule('${m.name}')">
+        <span class="name">${m.name}</span>
+        <span class="ver">${m.version}</span>
+        <span class="size">${(m.size/1024).toFixed(1)}k</span>
+        <span class="date">${m.modified}</span>
+        <button class="btn danger" onclick="event.stopPropagation();deleteModule('${m.name}')" style="padding:2px 6px;font-size:10px">🗑️</button>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  document.getElementById('modules-grouped').innerHTML = html;
+  document.getElementById('mod-total').textContent = `(${_modules.length} modules)`;
 }
 
 function renderDashStats() {
-  const css = _modules.filter(m => m.type === 'css').length;
-  const html = _modules.filter(m => m.type === 'html').length;
-  const js = _modules.filter(m => m.type === 'js').length;
-  const total = _modules.reduce((s, m) => s + m.size, 0);
-  document.getElementById('dash-stats').innerHTML = `
-    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--accent)">${_modules.length}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">MODULES</div></div>
-    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#f0db4f">${js}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">JAVASCRIPT</div></div>
-    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#e8734a">${html}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">HTML</div></div>
-    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:#e44d9a">${css}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">CSS</div></div>
-    <div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--text)">${(total/1024).toFixed(0)}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Ko TOTAL</div></div>
-  `;
+  const byType = {}; _modules.forEach(m => { byType[m.type] = (byType[m.type]||0)+1; });
+  const total = _modules.reduce((s,m) => s+m.size, 0);
+  const colors = {js:'#f0db4f',html:'#e8734a',css:'#e44d9a',json:'#8b5cf6'};
+  let html = `<div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--accent)">${_modules.length}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">MODULES</div></div>`;
+  Object.keys(colors).forEach(t => {
+    html += `<div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:${colors[t]}">${byType[t]||0}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">${t.toUpperCase()}</div></div>`;
+  });
+  html += `<div style="background:var(--surface2);border-radius:8px;padding:14px;text-align:center"><div style="font-size:28px;font-weight:700;color:var(--text)">${(total/1024).toFixed(0)}</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Ko</div></div>`;
+  document.getElementById('dash-stats').innerHTML = html;
 }
 
 // ── MODULE EDITOR ──
 async function openModule(name) {
-  setStatus('Chargement ' + name + '...');
-  const r = await api('/module?name=' + encodeURIComponent(name));
-  if (!r.ok) { log(r.error, 'err'); return; }
+  setStatus('Chargement '+name+'...');
+  const r = await api('/module?name='+encodeURIComponent(name));
+  if (!r.ok) { log(r.error,'err'); return; }
   _currentModule = name;
-  document.getElementById('ed-filename').textContent = '✏️ ' + name;
-  document.getElementById('ed-meta').textContent = `${r.content.length} caractères · ${r.content.split('\n').length} lignes`;
-  document.getElementById('module-editor').value = r.content;
+  document.getElementById('ed-filename').textContent = '✏️ '+name;
+  // Extract version
+  const vm = r.content.match(/v[\d.]+/);
+  document.getElementById('ed-version').textContent = vm ? vm[0] : '';
+  const lines = r.content.split('\n').length;
+  document.getElementById('ed-meta').textContent = `${r.content.length} car. · ${lines} lignes`;
+  _cmEditor.setValue(r.content);
+  _cmEditor.setOption('mode', getCMMode(name));
   showPanel('editor');
-  setStatus('Module chargé: ' + name);
-  log('Module ouvert: ' + name);
+  setStatus('Module: '+name);
+  log('Ouvert: '+name);
 }
 
 async function saveModule() {
   if (!_currentModule) return;
-  const content = document.getElementById('module-editor').value;
+  const content = _cmEditor.getValue();
   setStatus('Sauvegarde...');
-  const r = await api('/module', 'POST', { name: _currentModule, content });
-  if (r.ok) {
-    log('Module sauvé: ' + _currentModule + ' (' + r.size + ' octets)', 'ok');
-    setStatus('Sauvé !');
-    loadModules();
-  } else {
-    log('Erreur: ' + r.error, 'err');
-  }
+  const r = await api('/module','POST',{name:_currentModule, content});
+  if (r.ok) { log('💾 Sauvé: '+_currentModule+' ('+r.size+' o)','ok'); setStatus('Sauvé'); loadModules(); }
+  else log('❌ '+r.error,'err');
 }
 
 function newModule() {
   const name = prompt('Nom du nouveau module (ex: mon-module-js.js) :');
   if (!name) return;
   _currentModule = name;
-  document.getElementById('ed-filename').textContent = '✏️ ' + name + ' (nouveau)';
-  document.getElementById('ed-meta').textContent = 'Nouveau fichier';
-  document.getElementById('module-editor').value = '';
-  log('Nouveau module: ' + name, 'info');
+  document.getElementById('ed-filename').textContent = '✏️ '+name+' (nouveau)';
+  document.getElementById('ed-version').textContent = '';
+  document.getElementById('ed-meta').textContent = 'Nouveau';
+  _cmEditor.setValue('');
+  _cmEditor.setOption('mode', getCMMode(name));
+  showPanel('editor');
+  log('Nouveau: '+name,'info');
 }
 
-async function deleteModule(name) {
-  if (!confirm('Supprimer ' + name + ' ?')) return;
-  const r = await api('/module/delete', 'POST', { name });
-  if (r.ok) { log('Module supprimé: ' + name, 'warn'); loadModules(); }
-  else log('Erreur: ' + r.error, 'err');
+function deleteModule(name) {
+  showConfirm('Supprimer ce module ?', name, async function() {
+    const r = await api('/module/delete','POST',{name});
+    if (r.ok) { log('🗑️ Supprimé: '+name,'warn'); loadModules(); }
+    else log('❌ '+r.error,'err');
+  });
 }
-
-function deleteCurrentModule() {
-  if (_currentModule) deleteModule(_currentModule);
-}
+function deleteCurrentModule() { if (_currentModule) deleteModule(_currentModule); }
 
 // ── SKELETON ──
+let _skeletonContent = '';
 async function loadSkeleton() {
   const r = await api('/skeleton');
-  if (r.ok) document.getElementById('skeleton-editor').value = r.content;
-  else log(r.error, 'err');
+  if (!r.ok) { log(r.error,'err'); return; }
+  _skeletonContent = r.content;
+  _cmSkeleton.setValue(r.content);
+  renderSkeletonIncludes();
+}
+async function saveSkeleton() {
+  const content = _cmSkeleton.getValue();
+  const r = await api('/skeleton','POST',{content});
+  if (r.ok) { log('💾 Skeleton sauvé','ok'); setStatus('Skeleton sauvé'); _skeletonContent = content; renderSkeletonIncludes(); }
+  else log('❌ '+r.error,'err');
 }
 
-async function saveSkeleton() {
-  const content = document.getElementById('skeleton-editor').value;
-  const r = await api('/skeleton', 'POST', { content });
-  if (r.ok) { log('Skeleton sauvé', 'ok'); setStatus('Skeleton sauvé'); }
-  else log(r.error, 'err');
+function renderSkeletonIncludes(filter) {
+  const f = (filter||'').toLowerCase();
+  const lines = _skeletonContent.split('\n');
+  const pattern = /<INCLUDE:(.+?)\s*\/>/;
+  let html = '', n = 0;
+  lines.forEach((line, i) => {
+    const m = pattern.exec(line);
+    if (m) {
+      n++;
+      const path = m[1].trim();
+      if (f && !path.toLowerCase().includes(f)) return;
+      const name = path.split('/').pop();
+      html += `<div class="incl-row"><span class="num">${n}</span><span class="path" onclick="openModule('${name}')">${path}</span></div>`;
+    }
+  });
+  document.getElementById('skeleton-includes').innerHTML = html || '<div style="color:var(--muted);font-size:12px;padding:8px">Aucun INCLUDE trouvé</div>';
+}
+function filterSkeletonIncludes(v) { renderSkeletonIncludes(v); }
+
+function skeletonAddInclude() {
+  const path = prompt('Chemin du module à ajouter (ex: modules/mon-module-js.js) :');
+  if (!path) return;
+  const line = `<INCLUDE:${path} />`;
+  const content = _cmSkeleton.getValue();
+  // Insert before </body> or at end
+  const idx = content.lastIndexOf('</body>');
+  const newContent = idx >= 0 ? content.slice(0,idx)+line+'\n'+content.slice(idx) : content+'\n'+line;
+  _cmSkeleton.setValue(newContent);
+  log('➕ INCLUDE ajouté: '+path,'ok');
+}
+
+function skeletonRemoveInclude() {
+  const path = prompt('Chemin du module à retirer (ex: modules/mon-module-js.js) :');
+  if (!path) return;
+  const content = _cmSkeleton.getValue();
+  const regex = new RegExp('.*<INCLUDE:'+path.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*/>[\\r\\n]*','g');
+  const newContent = content.replace(regex, '');
+  if (newContent === content) { log('⚠️ INCLUDE non trouvé: '+path,'warn'); return; }
+  _cmSkeleton.setValue(newContent);
+  log('🗑️ INCLUDE retiré: '+path,'warn');
 }
 
 // ── CONFIG ──
 async function loadConfig() {
   const r = await api('/config');
   _config = r;
-  document.getElementById('cfg-project').value = r.project_name || '';
-  document.getElementById('cfg-workdir').value = r.work_dir || '';
-  document.getElementById('cfg-skeleton').value = r.skeleton || '';
-  document.getElementById('cfg-output').value = r.output || '';
-  document.getElementById('cfg-modules').value = r.modules_dir || '';
-  document.getElementById('cfg-github').value = r.github_dir || '';
-  document.getElementById('cfg-browser').value = r.browser || '';
-  document.getElementById('cfg-pattern').value = r.include_pattern || '';
-  document.getElementById('top-project').textContent = r.project_name || '—';
+  document.getElementById('cfg-project').value = r.project_name||'';
+  document.getElementById('cfg-workdir').value = r.work_dir||'';
+  document.getElementById('cfg-skeleton').value = r.skeleton||'';
+  document.getElementById('cfg-output').value = r.output||'';
+  document.getElementById('cfg-modules').value = r.modules_dir||'';
+  document.getElementById('cfg-github').value = r.github_dir||'';
+  document.getElementById('cfg-url').value = r.online_url||'';
+  document.getElementById('cfg-browser').value = r.browser||'';
+  document.getElementById('cfg-pattern').value = r.include_pattern||'';
+  document.getElementById('top-project').textContent = r.project_name||'—';
 }
 
 async function saveConfig() {
@@ -442,11 +553,13 @@ async function saveConfig() {
     output: document.getElementById('cfg-output').value,
     modules_dir: document.getElementById('cfg-modules').value,
     github_dir: document.getElementById('cfg-github').value,
+    online_url: document.getElementById('cfg-url').value,
     browser: document.getElementById('cfg-browser').value,
     include_pattern: document.getElementById('cfg-pattern').value,
   };
-  const r = await api('/config', 'POST', cfg);
-  log('Configuration sauvée', 'ok');
+  await api('/config','POST',cfg);
+  _config = cfg;
+  log('⚙️ Config sauvée','ok');
   setStatus('Config sauvée');
   document.getElementById('top-project').textContent = cfg.project_name;
   loadModules();
@@ -454,94 +567,54 @@ async function saveConfig() {
 
 // ── ACTIONS ──
 async function doBuild() {
-  setStatus('Build en cours...');
-  log('🔨 Build lancé...', 'info');
+  setStatus('Build...'); log('🔨 Build...','info');
   const r = await api('/build');
-  if (r.ok) {
-    log(`✅ Build OK: ${r.lines} lignes, ${r.modules} modules`, 'ok');
-    if (r.warnings && r.warnings.length) r.warnings.forEach(w => log('⚠️ ' + w, 'warn'));
-    setStatus('Build terminé');
-  } else {
-    log('❌ ' + r.error, 'err');
-    setStatus('Erreur build');
-  }
+  if (r.ok) { log(`✅ Build: ${r.lines} lignes, ${r.modules} modules`,'ok'); if(r.warnings) r.warnings.forEach(w=>log('⚠️ '+w,'warn')); setStatus('Build OK'); }
+  else { log('❌ '+r.error,'err'); setStatus('Erreur'); }
   return r;
 }
-
-async function doTest() {
-  setStatus('Ouverture navigateur...');
-  const r = await api('/test');
-  if (r.ok) log('🌐 Ouvert dans le navigateur', 'ok');
-  else log('❌ ' + r.error, 'err');
-}
-
+async function doTest() { const r=await api('/test'); if(r.ok) log('🖥️ Ouvert en local','ok'); else log('❌ '+r.error,'err'); }
 async function doPublish() {
-  setStatus('Publication...');
-  log('🚀 Publication GitHub...', 'info');
-  const r = await api('/publish');
-  if (r.ok) {
-    log('✅ ' + (r.message || 'Publié'), 'ok');
-    setStatus('Publié');
-  } else {
-    log('❌ ' + r.error, 'err');
-    setStatus('Erreur publication');
-  }
+  setStatus('Publication...'); log('🚀 Publication...','info');
+  const r=await api('/publish');
+  if(r.ok) { log('✅ '+(r.message||'Publié'),'ok'); setStatus('Publié'); } else { log('❌ '+r.error,'err'); setStatus('Erreur'); }
 }
-
 async function doBuildTest() {
-  setStatus('Build + Test...');
-  log('⚡ Build + Test...', 'info');
-  const r = await api('/build-test', 'POST');
-  if (r.ok) {
-    log(`✅ Build OK: ${r.build.lines} lignes, ${r.build.modules} modules`, 'ok');
-    log('🌐 Ouvert dans le navigateur', 'ok');
-    setStatus('Build + Test terminé');
-  } else log('❌ ' + (r.error || r.build?.error), 'err');
+  setStatus('Build+Test...'); log('⚡ Build+Test...','info');
+  const r=await api('/build-test','POST');
+  if(r.ok) { log(`✅ Build: ${r.build.lines} lignes, ${r.build.modules} modules`,'ok'); log('🖥️ Ouvert en local','ok'); setStatus('OK'); }
+  else log('❌ '+(r.error||r.build?.error),'err');
 }
-
 async function doBuildPublish() {
-  setStatus('Build + Publish...');
-  log('⚡ Build + Publish...', 'info');
-  const r = await api('/build-publish', 'POST');
-  if (r.ok) {
-    log(`✅ Build OK: ${r.build.lines} lignes, ${r.build.modules} modules`, 'ok');
-    log('✅ ' + (r.publish?.message || 'Publié'), 'ok');
-    setStatus('Build + Publish terminé');
-  } else log('❌ ' + (r.error || r.build?.error), 'err');
+  setStatus('Build+Publish...'); log('⚡ Build+Publish...','info');
+  const r=await api('/build-publish','POST');
+  if(r.ok) { log(`✅ Build: ${r.build.lines} lignes, ${r.build.modules} modules`,'ok'); log('✅ '+(r.publish?.message||'Publié'),'ok'); setStatus('Publié'); }
+  else log('❌ '+(r.error||r.build?.error),'err');
 }
-
 async function doBuildPublishTest() {
-  setStatus('Build + Publish + Test...');
-  log('⚡ Build + Publish + Test...', 'info');
-  const r = await api('/build-publish-test', 'POST');
-  if (r.ok) {
-    log(`✅ Build OK: ${r.build.lines} lignes, ${r.build.modules} modules`, 'ok');
-    log('✅ ' + (r.publish?.message || 'Publié'), 'ok');
-    log('🌐 Ouvert dans le navigateur', 'ok');
-    setStatus('Tout fait !');
-  } else log('❌ ' + (r.error || r.build?.error), 'err');
+  setStatus('⚡ Tout...'); log('⚡ Build+Publish+Test...','info');
+  const r=await api('/build-publish-test','POST');
+  if(r.ok) { log(`✅ Build: ${r.build.lines} lignes, ${r.build.modules} modules`,'ok'); log('✅ '+(r.publish?.message||'Publié'),'ok'); log('🖥️ Ouvert','ok'); setStatus('Tout fait !'); }
+  else log('❌ '+(r.error||r.build?.error),'err');
 }
-
-async function doRefresh() {
-  log('🔄 Rafraîchissement...', 'info');
-  await loadModules();
-  log('✅ Données à jour', 'ok');
+function doOpenOnline() {
+  const url = _config.online_url || 'https://caracole.github.io/MediFolio/';
+  window.open(url, '_blank');
+  log('🌍 Ouvert: '+url,'ok');
 }
+async function doRefresh() { log('🔄 Rafraîchissement...','info'); await loadModules(); log('✅ À jour','ok'); }
 
 // ── INIT ──
 async function init() {
+  initEditors();
   const r = await api('/config');
-  if (r.error) {
-    log('❌ ' + r.error, 'err');
-    log('Lancez le serveur: python3 modular_server.py', 'warn');
-    return;
-  }
+  if (r.error) { log('❌ '+r.error,'err'); log('Lancez: python3 modular_server.py','warn'); return; }
   _config = r;
-  document.getElementById('top-project').textContent = r.project_name || '—';
+  document.getElementById('top-project').textContent = r.project_name||'—';
+  if (document.body.classList.contains('light')) document.getElementById('theme-btn').querySelector('.i').textContent = '🌙';
   await loadModules();
-  log('🚀 ModularBuilder prêt — ' + (_config.project_name || ''), 'ok');
+  log('🚀 ModularBuilder v1.1 prêt — '+(_config.project_name||''),'ok');
 }
-
 init();
 </script>
 </body>
